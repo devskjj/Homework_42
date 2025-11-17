@@ -1,32 +1,49 @@
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class Utility {
+    private static final List<Client> clients = new ArrayList<>();
+
     private Utility() {
     }
 
-    public static void handle(Socket socket) {
+    public static void handle(Socket socket) throws IOException {
         System.out.printf("Connected client: %s%n", socket);
+        Client client = new Client(socket);
+        client.setConnected(true);
+        clients.add(client);
 
         try (socket;
              Scanner reader = getReader(socket);
              PrintWriter writer = getWriter(socket)
         ) {
-            sendResponse("Hello from Server " + socket.getPort(), writer);
+            sendResponse(client, "Hello from Server " + socket.getPort(), writer);
             while (true) {
                 String input = reader.nextLine().trim();
                 if (isEmptyMsg(input) || isQuitMsg(input)) {
                     break;
                 }
-                sendResponse(input.toUpperCase(), writer);
+
 
                 System.out.printf("Got message: %s%n", input);
+
+                for (Client c : clients) {
+                    if (!c.getNickname().equals(client.getNickname())) {
+                        if (c.isConnected()) {
+                            c.sendMsg(client.getNickname() + ": " + input);
+                        }
+                    }
+                }
 
             }
         } catch (NoSuchElementException e) {
             System.out.println("Client dropped connection!");
+            client.setConnected(false);
+            clients.remove(client);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -52,8 +69,8 @@ public class Utility {
         return msg == null || msg.isBlank();
     }
 
-    private static void sendResponse(String response, Writer writer) throws IOException {
-        writer.write(response);
+    private static void sendResponse(Client client, String response, Writer writer) throws IOException {
+        writer.write(client.getNickname() + ": " + response);
         writer.write(System.lineSeparator());
         writer.flush();
     }

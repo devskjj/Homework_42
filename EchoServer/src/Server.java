@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,12 +23,17 @@ public class Server {
         try (ServerSocket server = new ServerSocket(port)) {
             while (!server.isClosed()) {
                 Socket socket = server.accept();
-                pool.submit(() -> Utility.handle(socket));
+                pool.submit(() -> {
+                    try {
+                        Utility.handle(socket);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
             }
         } catch (IOException e) {
             System.out.println("Вероятнее всего порт " + port + " занят.");
             e.printStackTrace();
         }
     }
-
 }
