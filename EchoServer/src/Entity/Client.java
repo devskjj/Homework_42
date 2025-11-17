@@ -42,4 +42,6 @@ public class Client {
     public void setConnected(boolean connected) {
         isConnected = connected;
     }
+
+
 }

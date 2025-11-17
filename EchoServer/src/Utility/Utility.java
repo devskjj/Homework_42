@@ -1,3 +1,5 @@
+package Utility;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -24,26 +26,14 @@ public class Utility {
              Scanner reader = getReader(socket);
              PrintWriter writer = getWriter(socket)
         ) {
-            sendResponse(client, "Hello from Server " + socket.getPort(), writer);
+            sendResponse(client.getNickname() + ", " + "Hello from Server " + socket.getPort(), writer);
             while (true) {
                 String input = reader.nextLine().trim();
                 if (isEmptyMsg(input) || isQuitMsg(input)) {
                     break;
                 }
 
-//                String[] parts = input.split(" ", 2);
-//                String command = " ";
-//                String message;
-//
-//                try {
-//                    command = parts[0].toUpperCase();
-//                    message = parts[1];
-//                } catch (ArrayIndexOutOfBoundsException e) {
-//                    message = parts[0];
-//                }
-
                 Commands cmd = Commands.fromInput(input);
-
 
                 try {
                     cmd.execute(input, writer, client, clients);
@@ -58,17 +48,15 @@ public class Utility {
                 }
                 System.out.printf("Got message: %s%n", input);
 
-
-                
             }
         } catch (NoSuchElementException e) {
-            System.out.println("Entity.Client dropped connection!");
+            System.out.println("Client dropped connection!");
             client.setConnected(false);
             clients.remove(client);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Entity.Client is disconnected!");
+        System.out.println("Client is disconnected!");
     }
 
 
@@ -91,9 +79,14 @@ public class Utility {
         return msg == null || msg.isBlank();
     }
 
-    private static void sendResponse(Client client, String response, Writer writer) throws IOException {
-        writer.write(response);
-        writer.write(System.lineSeparator());
-        writer.flush();
+    public static void sendResponse(String response, Writer writer) {
+        try {
+            writer.write(response);
+            writer.write(System.lineSeparator());
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
 }
