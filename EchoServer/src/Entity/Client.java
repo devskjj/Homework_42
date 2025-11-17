@@ -1,3 +1,5 @@
+package Entity;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -7,7 +9,7 @@ import java.util.UUID;
 
 public class Client {
     private final Socket socket;
-    private final String nickname;
+    private String nickname;
     private final Scanner in;
     private final PrintWriter out;
     private boolean isConnected;
@@ -26,6 +28,11 @@ public class Client {
 
     public String getNickname() {
         return nickname;
+    }
+
+
+    public void setNickname(String input) {
+        this.nickname = input;
     }
 
     public boolean isConnected() {

@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import Entity.Client;
+import Enum.Commands;
+
 public class Utility {
     private static final List<Client> clients = new ArrayList<>();
 
@@ -28,27 +31,46 @@ public class Utility {
                     break;
                 }
 
+//                String[] parts = input.split(" ", 2);
+//                String command = " ";
+//                String message;
+//
+//                try {
+//                    command = parts[0].toUpperCase();
+//                    message = parts[1];
+//                } catch (ArrayIndexOutOfBoundsException e) {
+//                    message = parts[0];
+//                }
 
-                System.out.printf("Got message: %s%n", input);
+                Commands cmd = Commands.fromInput(input);
 
-                for (Client c : clients) {
-                    if (!c.getNickname().equals(client.getNickname())) {
-                        if (c.isConnected()) {
-                            c.sendMsg(client.getNickname() + ": " + input);
+
+                try {
+                    cmd.execute(input, writer, client, clients);
+                } catch (NullPointerException e) {
+                    for (Client c : clients) {
+                        if (!c.getNickname().equals(client.getNickname())) {
+                            if (c.isConnected()) {
+                                c.sendMsg(client.getNickname() + ": " + input);
+                            }
                         }
                     }
                 }
+                System.out.printf("Got message: %s%n", input);
 
+
+                
             }
         } catch (NoSuchElementException e) {
-            System.out.println("Client dropped connection!");
+            System.out.println("Entity.Client dropped connection!");
             client.setConnected(false);
             clients.remove(client);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Client is disconnected!");
+        System.out.println("Entity.Client is disconnected!");
     }
+
 
     private static PrintWriter getWriter(Socket socket) throws IOException {
         OutputStream outputStream = socket.getOutputStream();
@@ -70,7 +92,7 @@ public class Utility {
     }
 
     private static void sendResponse(Client client, String response, Writer writer) throws IOException {
-        writer.write(client.getNickname() + ": " + response);
+        writer.write(response);
         writer.write(System.lineSeparator());
         writer.flush();
     }
