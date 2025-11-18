@@ -22,53 +22,32 @@ public class Utility {
         client.setConnected(true);
         clients.add(client);
 
-        try (socket;
-             Scanner reader = getReader(socket);
-             PrintWriter writer = getWriter(socket)
-        ) {
+        try (socket; Scanner reader = client.getIn(); PrintWriter writer = client.getOut()) {
             sendResponse(client.getNickname() + ", " + "Hello from Server " + socket.getPort(), writer);
             while (true) {
                 String input = reader.nextLine().trim();
                 if (isEmptyMsg(input) || isQuitMsg(input)) {
+                    sendResponse("You are disconnected!", writer);
                     break;
                 }
 
                 Commands cmd = Commands.fromInput(input);
-
                 try {
                     cmd.execute(input, writer, client, clients);
                 } catch (NullPointerException e) {
-                    for (Client c : clients) {
-                        if (!c.getNickname().equals(client.getNickname())) {
-                            if (c.isConnected()) {
-                                c.sendMsg(client.getNickname() + ": " + input);
-                            }
-                        }
-                    }
+                    Utility.sendToAnotherClients(input, client);
                 }
                 System.out.printf("Got message: %s%n", input);
-
             }
         } catch (NoSuchElementException e) {
             System.out.println("Client dropped connection!");
-            client.setConnected(false);
-            clients.remove(client);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            client.setConnected(false);
+            clients.remove(client);
+            sendToAnotherClients("Client " + client.getNickname() + " is disconnected!", client);
         }
-        System.out.println("Client is disconnected!");
-    }
-
-
-    private static PrintWriter getWriter(Socket socket) throws IOException {
-        OutputStream outputStream = socket.getOutputStream();
-        return new PrintWriter(outputStream);
-    }
-
-    private static Scanner getReader(Socket socket) throws IOException {
-        InputStream inputStream = socket.getInputStream();
-        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-        return new Scanner(inputStreamReader);
     }
 
     private static boolean isQuitMsg(String msg) {
@@ -89,4 +68,13 @@ public class Utility {
         }
     }
 
+    public static void sendToAnotherClients(String msg, Client client) {
+        for (Client c : clients) {
+            if (!c.getNickname().equals(client.getNickname())) {
+                if (c.isConnected()) {
+                    c.sendMsg(client.getNickname() + ": " + msg);
+                }
+            }
+        }
+    }
 }

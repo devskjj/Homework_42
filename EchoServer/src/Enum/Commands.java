@@ -17,6 +17,7 @@ public enum Commands {
             printWriter.flush();
         }
     },
+
     TIME("/time") {
         @Override
         public void execute(String input, PrintWriter printWriter, Client client, List<Client> clients) {
@@ -24,22 +25,21 @@ public enum Commands {
             printWriter.flush();
         }
     },
+
     NAME("/name") {
         @Override
         public void execute(String input, PrintWriter printWriter, Client client, List<Client> clients) {
             String[] parts = input.split(" ", 2);
 
             if (parts.length < 2 || parts[1].isBlank()) {
-                printWriter.println("Введите имя без пробелов после команды.");
-                printWriter.flush();
+                Utility.sendResponse("Введите имя без пробелов после команды.", printWriter);
                 return;
             }
 
             String newName = parts[1];
 
             if (newName.contains(" ")) {
-                printWriter.println("Имя не должно содержать пробелов.");
-                printWriter.flush();
+                Utility.sendResponse("Имя не должно содержать пробелов.", printWriter);
                 return;
             }
 
@@ -47,41 +47,44 @@ public enum Commands {
                     anyMatch(c -> c.getNickname().equalsIgnoreCase(newName));
 
             if (notUniqueName) {
-                printWriter.println("Такое имя уже существует.");
-                printWriter.flush();
+                Utility.sendResponse("Такое имя уже существует.", printWriter);
                 return;
             }
 
             String oldName = client.getNickname();
             client.setNickname(newName);
 
-            for (Client c : clients) {
-                if (!c.getNickname().equals(client.getNickname())) {
-                    if (c.isConnected()) {
-                        c.sendMsg("Пользователь " + oldName + " теперь известен как " + client.getNickname());
-                    }
-                }
-            }
-
-            printWriter.printf("Вы теперь известны как %s%n", client.getNickname());
-            printWriter.flush();
+            Utility.sendToAnotherClients("Пользователь " + oldName + " теперь известен как " + client.getNickname(), client);
+            Utility.sendResponse("Вы теперь известны как " + client.getNickname(), printWriter);
         }
     },
+
     LIST("/list") {
         @Override
         public void execute(String input, PrintWriter printWriter, Client client, List<Client> clients) {
-            clients.forEach(c -> printWriter.println(c.getNickname()));
+            clients.stream()
+                    .filter(Client::isConnected)
+                    .forEach(c -> printWriter.println(c.getNickname()));
             printWriter.flush();
         }
     },
+
     REVERSE("/reverse") {
         @Override
         public void execute(String input, PrintWriter printWriter, Client client, List<Client> clients) {
-            String output = new StringBuilder(input).reverse().toString();
-            printWriter.println(output);
-            printWriter.flush();
+            String[] parts = input.split(" ", 2);
+
+            if (parts.length < 2 || parts[1].isBlank()) {
+                Utility.sendResponse("Введите /reverse сообщение", printWriter);
+                return;
+            }
+
+            String output = new StringBuilder(parts[1]).reverse().toString();
+            Utility.sendToAnotherClients(output, client);
+            Utility.sendResponse(output, printWriter);
         }
     },
+
     WHISPER("/whisper") {
         @Override
         public void execute(String input, PrintWriter printWriter, Client client, List<Client> clients) {
@@ -103,11 +106,18 @@ public enum Commands {
                     );
         }
     },
+
     UPPER("/upper") {
         @Override
         public void execute(String input, PrintWriter printWriter, Client client, List<Client> clients) {
-            printWriter.println(input.toUpperCase());
-            printWriter.flush();
+            String[] parts = input.split(" ", 2);
+
+            if (parts.length < 2 || parts[1].isBlank()) {
+                Utility.sendResponse("Введите /upper сообщение", printWriter);
+                return;
+            }
+            Utility.sendToAnotherClients(parts[1].toUpperCase(), client);
+            Utility.sendResponse(parts[1].toUpperCase(), printWriter);
         }
     };
 
@@ -120,16 +130,13 @@ public enum Commands {
     public abstract void execute(String input, PrintWriter printWriter, Client client, List<Client> clients);
 
     public static Commands fromInput(String input) {
-        if (input.toLowerCase().startsWith("/name ")) {
-            return NAME;
+        if (input == null || input.isBlank()) {
+            return null;
         }
 
-        if (input.toLowerCase().startsWith("/whisper ")) {
-            return WHISPER;
-        }
-
+        String value = input.split(" ", 2)[0];
         for (Commands c : Commands.values()) {
-            if (input.equalsIgnoreCase(c.cmd)) {
+            if (value.equalsIgnoreCase(c.cmd)) {
                 return c;
             }
         }
