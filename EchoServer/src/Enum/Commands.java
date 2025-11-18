@@ -80,6 +80,7 @@ public enum Commands {
             }
 
             String output = new StringBuilder(parts[1]).reverse().toString();
+
             Utility.sendToAnotherClients(output, client);
             Utility.sendResponse(output, printWriter);
         }
@@ -116,6 +117,7 @@ public enum Commands {
                 Utility.sendResponse("Введите /upper сообщение", printWriter);
                 return;
             }
+
             Utility.sendToAnotherClients(parts[1].toUpperCase(), client);
             Utility.sendResponse(parts[1].toUpperCase(), printWriter);
         }
@@ -135,6 +137,7 @@ public enum Commands {
         }
 
         String value = input.split(" ", 2)[0];
+
         for (Commands c : Commands.values()) {
             if (value.equalsIgnoreCase(c.cmd)) {
                 return c;

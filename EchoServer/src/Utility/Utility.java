@@ -24,6 +24,7 @@ public class Utility {
 
         try (socket; Scanner reader = client.getIn(); PrintWriter writer = client.getOut()) {
             sendResponse(client.getNickname() + ", " + "Hello from Server " + socket.getPort(), writer);
+            sendToAnotherClients(client.getNickname() + " is connected!", client);
             while (true) {
                 String input = reader.nextLine().trim();
                 if (isEmptyMsg(input) || isQuitMsg(input)) {
